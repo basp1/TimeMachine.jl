@@ -2,6 +2,16 @@ export dtw
 
 using Spandex
 
+struct Position
+    x::Int64
+    y::Int64
+end
+
+struct Step
+    pos::Position
+    weight::Float64
+end
+
 function dtw(a::Vector{T}, b::Vector{T}, distance) where {T}
     local m = length(a)
     local n = length(b)
@@ -14,35 +24,29 @@ function dtw(a::Vector{T}, b::Vector{T}, distance) where {T}
         end
     end
 
-    local path = astar(d, (1, 1), (m, n))
+    local path = astar(d, Position(1, 1), Position(m, n))
 
     local cost = 0.0
     for p in path
-        cost += d[p[1], p[2]]
+        cost += d[p.x, p.y]
     end
 
     return cost / length(path)
 end
 
-function astar(
-    D::Matrix{T},
-    from::Tuple{Int64,Int64},
-    to::Tuple{Int64,Int64},
-) where {T}
+function astar(D::Matrix{T}, from::Position, to::Position) where {T}
     local m = size(D, 1)
     local n = size(D, 2)
 
-    local pq = PriorityQueue{Tuple{Int64,Int64}}(
-        (a, b) -> (D[a[1], a[2]] < D[b[1], b[2]]) ? a : b,
-    )
+    local pq = PriorityQueue{Step}((a, b) -> (a.weight < b.weight) ? a : b)
 
-    push!(pq, from)
+    push!(pq, Step(from, 0.0))
 
-    local visited = Set{Tuple{Int64,Int64}}()
+    local visited = Set{Position}()
     push!(visited, from)
 
     local found = false
-    local path = Dict{Tuple{Int64,Int64},Tuple{Int64,Int64}}()
+    local path = Dict{Position,Position}()
 
     local routes = [(1, 0), (0, 1), (1, 1)]
 
@@ -50,9 +54,9 @@ function astar(
         local cur = pop!(pq)
 
         for route in routes
-            local next = (cur[1] + route[1], cur[2] + route[2])
+            local next = Position(cur.pos.x + route[1], cur.pos.y + route[2])
 
-            if next[1] > m || next[2] > n
+            if next.x > m || next.y > n
                 continue
             end
 
@@ -60,14 +64,14 @@ function astar(
                 continue
             end
 
-            path[next] = cur
+            path[next] = cur.pos
 
             if to == next
                 found = true
                 break
             end
 
-            push!(pq, next)
+            push!(pq, Step(next, cur.weight + D[next.x, next.y]))
 
             push!(visited, next)
         end
@@ -76,7 +80,7 @@ function astar(
     if !found
         return []
     else
-        local opt = Vector{Tuple{Int64,Int64}}()
+        local opt = Vector{Position}()
         local cur = to
         while from != cur
             push!(opt, cur)
