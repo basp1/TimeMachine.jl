@@ -61,11 +61,12 @@ function astar(
 
     local tg = Float64(n) / m
     local ctg = Float64(m) / n
-    local routes = [(1, 0), (0, 1), (1, 1)]
+    local routes = [(1, 1), (1, 0), (0, 1)]
 
     local founds = Vector{Step}()
     while pq.size > 0
         local cur = pop!(pq)
+
         if to == cur.pos
             push!(founds, cur)
             continue
