@@ -2,12 +2,12 @@ using Test
 using TimeMachine
 
 @testset "dtw 1" begin
-    local x = dtw([1, 2, 4, 1, 2], [1, 2, 4, 1, 2], (a, b) -> abs(a - b))
-    @test 0.0 == x
+    local cost = dtw([1, 2, 4, 1, 2], [1, 2, 4, 1, 2], (a, b) -> abs(a - b))
+    @test 0.0 == cost
 
-    x = dtw([2, 6, 5, 3, 2], [1, 2, 4, 1, 2], (a, b) -> abs(a - b))
+    cost = dtw([2, 6, 5, 3, 2], [1, 2, 4, 1, 2], (a, b) -> abs(a - b))
 
-    @test 1 == x || 6 / 7.0 == x
+    @test 1 == cost
 end
 
 @testset "dtw 2" begin
