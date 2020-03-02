@@ -1,0 +1,8 @@
+name = "TimeMachine"
+uuid = "0d52bb74-2461-4467-9b36-76152c342783"
+authors = ["basp1"]
+version = "0.1.0"
+
+[deps]
+Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
+Spandex = "8d673e23-0bd5-44ef-b54c-c957c2c86252"
