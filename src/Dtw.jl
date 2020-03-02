@@ -36,13 +36,13 @@ function dtw(
         end
     end
 
-    local pos = astar(d, Position(1, 1), Position(m, n), Int64(window_size))
+    local pos = find_best(d, Position(1, 1), Position(m, n), Int64(window_size))
 
     local cost = pos.weight / pos.iter
     return cost
 end
 
-function astar(
+function find_best(
     D::Matrix{T},
     from::Position,
     to::Position,
@@ -52,15 +52,12 @@ function astar(
     local n = size(D, 2)
 
     local pq = PriorityQueue{Step}((a, b) -> (a.weight < b.weight) ? a : b)
-
     push!(pq, Step(from, D[from.x, from.y], 1))
 
     local visited = Set{Position}()
     push!(visited, from)
 
-
     local tg = Float64(n) / m
-    local ctg = Float64(m) / n
     local routes = [(1, 1), (1, 0), (0, 1)]
 
     local founds = Vector{Step}()
@@ -74,13 +71,12 @@ function astar(
 
         for route in routes
             local next = Position(cur.pos.x + route[1], cur.pos.y + route[2])
-
             if next.x > m || next.y > n
                 continue
             end
 
-            local dy = tg * next.x
-            local dx = ctg * next.y
+            local dy = next.x * tg
+            local dx = next.y / tg
             if abs(next.x - dx) > window_size || abs(next.y - dy) > window_size
                 continue
             end
@@ -90,7 +86,6 @@ function astar(
             end
 
             push!(pq, Step(next, cur.weight + D[next.x, next.y], cur.iter + 1))
-
             push!(visited, next)
         end
     end
