@@ -7,17 +7,18 @@ struct Position
     y::Int64
 end
 
-struct Step
+struct Solution
     pos::Position
-    weight::Float64
     iter::Int64
+    cost::Float64
+    weight::Float64
 end
 
 function dtw(
     a::Vector{T},
     b::Vector{T},
     distance,
-    window_size::Number = 0,
+    window_size::Number = -1,
 ) where {T}
     local m = length(a)
     local n = length(b)
@@ -25,24 +26,50 @@ function dtw(
     if typeof(window_size) != Int
         window_size = Int64(round(min(m, n) * window_size))
     end
-    if 0 == window_size
+    if window_size < 0
         window_size = max(m, n)
     end
 
     local d = Matrix{T}(undef, m, n)
+    fill!(d, typemax(T))
     for i = 1:m
         for j = max(1, i - window_size):min(n, i + window_size)
             d[i, j] = distance(a[i], b[j])
         end
     end
 
-    local pos = find_best(d, Position(1, 1), Position(m, n), Int64(window_size))
+    local D = copy(d)
+    for i = 1:m
+        for j = max(1, i - window_size):min(n, i + window_size)
+            if 1 == i && 1 == j
+                continue
+            end
 
-    local cost = pos.weight / pos.iter
-    return cost
+            local d1 = typemax(T)
+            if i > 1
+                d1 = D[i-1, j]
+            end
+            local d2 = typemax(T)
+            if j > 1
+                d2 = D[i, j-1]
+            end
+            local d3 = typemax(T)
+            if i > 1 && j > 1
+                d3 = D[i-1, j-1]
+            end
+
+            D[i, j] += min(d1, min(d2, d3))
+        end
+    end
+
+    local solution =
+        find_best(d, D, Position(1, 1), Position(m, n), Int64(window_size))
+
+    return solution.cost / Float64(solution.iter)
 end
 
 function find_best(
+    d::Matrix{T},
     D::Matrix{T},
     from::Position,
     to::Position,
@@ -51,22 +78,22 @@ function find_best(
     local m = size(D, 1)
     local n = size(D, 2)
 
-    local pq = PriorityQueue{Step}((a, b) -> (a.weight < b.weight) ? a : b)
-    push!(pq, Step(from, D[from.x, from.y], 1))
+    local pq = PriorityQueue{Solution}((a, b) -> (a.weight < b.weight) ? a : b)
+    push!(pq, Solution(from, 1, d[from.x, from.y], D[from.x, from.y]))
 
-    local visited = Set{Position}()
-    push!(visited, from)
+    local visited = Dict{Position,Float64}()
+    visited[from] = D[from.x, from.y]
 
     local tg = Float64(n) / m
     local routes = [(1, 1), (1, 0), (0, 1)]
 
-    local founds = Vector{Step}()
+    local found = missing
     while pq.size > 0
         local cur = pop!(pq)
 
         if to == cur.pos
-            push!(founds, cur)
-            continue
+            found = cur
+            break
         end
 
         for route in routes
@@ -81,14 +108,25 @@ function find_best(
                 continue
             end
 
-            if next in visited
-                continue
+            local new_weight = cur.weight + D[next.x, next.y]
+            if haskey(visited, next)
+                if visited[next] < new_weight
+                    continue
+                end
             end
+            visited[next] = new_weight
 
-            push!(pq, Step(next, cur.weight + D[next.x, next.y], cur.iter + 1))
-            push!(visited, next)
+            push!(
+                pq,
+                Solution(
+                    next,
+                    cur.iter + 1,
+                    cur.cost + d[next.x, next.y],
+                    new_weight,
+                ),
+            )
         end
     end
 
-    return founds[argmin(map(a -> a.weight, founds))]
+    return found
 end

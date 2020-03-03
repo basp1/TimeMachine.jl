@@ -2,6 +2,7 @@ using Test
 using TimeMachine
 
 @testset "dtw 1" begin
+    # dist = Distances.Euclidean()
     local cost = dtw([1, 2, 4, 1, 2], [1, 2, 4, 1, 2], (a, b) -> abs(a - b))
     @test 0.0 == cost
 
@@ -11,6 +12,7 @@ using TimeMachine
 end
 
 @testset "dtw 2" begin
+    # dist = Distances.SqEuclidean()
     local a = [1, 1, 1, 2, 4, 6, 5, 5, 5, 4, 4, 3, 1, 1, 1]
     local b = [1, 1, 2, 4, 6, 6, 6, 5, 4, 4, 4, 3, 3, 3, 1]
     local cost = dtw(a, b, (a, b) -> (a - b)^2)
@@ -19,7 +21,7 @@ end
 
     a[end] += 2
     cost = dtw(a, b, (a, b) -> (a - b)^2)
-    @test 0.2 == cost
+    @test (2.0 / 11.0) == cost
 
     a = collect(1:10)
     b = a .+ 1
