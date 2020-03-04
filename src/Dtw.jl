@@ -27,7 +27,7 @@ function dtw(
         window_size = Int64(round(min(m, n) * window_size))
     end
     if window_size < 0
-        window_size = max(m, n)
+        window_size = m + n + 1
     end
 
     local d = Matrix{T}(undef, m, n)
