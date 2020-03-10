@@ -87,9 +87,15 @@ function find_best(
     local tg = Float64(n) / m
     local routes = [(1, 1), (1, 0), (0, 1)]
 
+    local iter = 1
     local found = missing
     while pq.size > 0
         local cur = pop!(pq)
+        iter = max(iter, cur.iter)
+
+        if (iter - cur.iter) > window_size
+            continue
+        end
 
         if to == cur.pos
             found = cur
